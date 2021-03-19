@@ -1,0 +1,47 @@
+- name: Create Web Application
+  k8s:
+    kubeconfig: "{{ kube_config.stdout }}"
+    api_version: v1
+    namespace: dev
+    definition:
+      kind: Deployment
+      metadata:
+        name: angularnode
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: angularnode
+        template:
+          metadata:
+            labels:
+              app: angularnode
+          spec:
+            containers:
+              - name: app
+                image: us.icr.io/dws-aa-poc/angularnode:latest
+                ports:
+                  - containerPort: 3000
+                env:
+                  - name: MONGODB_URI
+                    value: mongodb://mongo:27017/test
+                imagePullPolicy: Always
+            imagePullSecrets:
+            - name: all-icr-io                  
+
+- name: Create web service 
+  k8s:
+    kubeconfig: "{{ kube_config.stdout }}"
+    api_version: v1
+    namespace: dev 
+    definition:
+      kind: Service
+      metadata:
+        name: angularnode-service
+      spec:
+        selector:
+          app: angularnode
+        ports:
+          - port: 3000
+            targetPort: 3000
+        type: LoadBalancer 
